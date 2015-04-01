@@ -1,0 +1,126 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{lipsum}
+\usepackage{authblk}
+\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% -- Begin code formatting --
+\usepackage{listings}
+\usepackage{courier}
+\lstset{
+language=C,
+basicstyle=\small\sffamily,
+numbers=left,
+numberstyle=\tiny,
+frame=tb,
+columns=fullflexible,
+showstringspaces=false,
+literate={PI}{{$\pi \approx$}}1
+}
+% -- End code formatting --
+
+\newcommand{\dd}{\,\textrm{d}}
+
+\pagestyle{fancy}
+
+\renewenvironment{abstract}{
+\hfill\begin{minipage}{0.95\textwidth}
+\rule{\textwidth}{1pt}}
+{\par\noindent\rule{\textwidth}{1pt}\end{minipage}}
+
+\makeatletter
+\renewcommand\@maketitle{
+\hfill
+\begin{minipage}{0.95\textwidth}
+\vskip 2em
+\let\footnote\thanks 
+{\LARGE \@title \par }
+\vskip 1.5em
+{\large \@author \par}
+\end{minipage}
+\vskip 1em \par
+}
+\makeatother
+
+\setlength{\parskip}{\baselineskip}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+
+\title{Using Riemann Sums to Approximate $\pi$}
+\author[1]{Joshua Williams}
+\affil[1]{jodawill@members.fsf.org}
+
+\maketitle
+
+\begin{abstract}
+Demonstration of a slow, but creative new method of approximating $\pi$ by computing the Riemann sum over a semicircle.
+\end{abstract}
+\section{Introduction}
+Let $n \in \mathbb{Z}$. Then $\pi \approx \frac{8}{n^2} \sum\limits_{i=1}^n \sqrt{i(n-i)}$.
+
+This method was originally described in a paper I wrote on November 30, 2012. I discovered this method during my first semester of calculus at IUK.
+
+\section {Proof}
+A semicircle can be represented by the function $f(x) = \sqrt{r^2-x^2}$. The area of a semicircle is $A = \frac{\pi}{2} r^2$, which can also be represented as an integral:
+\begin{align*}
+\frac{\pi}{2}r^2 &= \int\limits_{-r}^r \sqrt{r^2-x^2}
+\end{align*}
+Now we write this definite integral in terms of a Riemann sum, where $n \in \mathbb{Z}^+$.
+\begin{align*}
+\int\limits_{-r}^r \sqrt{r^2-x^2} &= \lim\limits_{n \to \infty} \sum\limits_{i=1}^n  f(x_i^*) (x_i - x_{i-1})\\
+&= \lim\limits_{n \to \infty} \sum\limits_{i=1}^n \frac{2r}{n} \sqrt{r^2 - \left(\frac{2i}{n} -r\right)^2}
+\end{align*}
+It then follows that:
+\begin{align*}
+\frac{\pi}{2}r^2 &= \lim\limits_{n \to \infty} \sum\limits_{i=1}^n \frac{2r}{n} \sqrt{r^2 - \left(\frac{2i}{n} -r\right)^2}
+\end{align*}
+Let $r = 1$. Since $n > 0$,
+\begin{align*}
+\frac{\pi}{2} &= \lim\limits_{n \to \infty} \sum\limits_{i=1}^n \frac{2}{n} \sqrt{1 - \left(\frac{2i}{n} -1\right)^2}\\
+\implies \pi &= \frac{4}{n} \lim\limits_{n \to \infty} \sum\limits_{i=1}^n \sqrt{1 - \left(\frac{2i}{n} -1\right)^2}\\
+&= \frac{4}{n} \lim\limits_{n \to \infty} \sum\limits_{i=1}^n \sqrt{1-\left( \frac{4i^2}{n^2} - \frac{4i}{n} + 1 \right)}\\
+&= \frac{4}{n} \lim\limits_{n \to \infty} \sum\limits_{i=1}^n \sqrt{\frac{4i}{n} - \frac{4i^2}{n^2}}\\
+&= \frac{4}{n} \lim\limits_{n \to \infty} \sum\limits_{i=1}^n \sqrt{\frac{4in - 4i^2}{n^2}}\\
+&= \frac{4}{n} \lim\limits_{n \to \infty} \sum\limits_{i=1}^n \frac{2}{n} \sqrt{i(n-i)}\\
+&= \frac{8}{n^2} \lim\limits_{n \to \infty} \sum\limits_{i=1}^n \sqrt{i(n-i)}
+\end{align*}
+
+So to approximate the value of $\pi$, we take a rectangular width of $\frac{1}{n}$ and compute the sum $\frac{8}{n^2} \sum\limits_{i=1}^n \sqrt{i(n-i)}$, as illustrated by the C code in the following section.
+
+\newpage
+\section{Example}
+\begin{lstlisting}[title=riesum.c]
+#include <stdio.h>
+#include <math.h>
+
+int main(int argc, char *argv[]) {
+ int n;
+ printf("Enter a positive integer. n = ");
+ for (scanf("%d",&n); n <= 0; scanf("%d",&n)) {
+  while (fgetc(stdin) != '\n');
+  printf("Enter a valid integer. n = ");
+ }
+
+ double sum = 0;
+
+ for (int i = 1; i <= n; i++) {
+  sum += sqrt(i*(n-i))/n;
+ }
+
+ // Note that we kept one n in the denominator of the sum to avoid
+ // an integer overflow.
+ sum *= 8/(double)n;
+
+ printf(PI %f\n",sum);
+
+ return 0;
+}
+\end{lstlisting}
+
+To compile, run: \fontfamily{qcr}\selectfont{gcc riesum.c -o riesum -lm}
+
+\end{document}
